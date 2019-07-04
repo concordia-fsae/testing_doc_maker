@@ -1,0 +1,18 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Convert homepage.ui",
+            "type": "shell",
+            "command": "pyuic5 homepage_export.ui > homepage_export.py"
+        },
+        {
+            "label": "Convert attendee_export.ui",
+            "type": "shell",
+            "command": "pyuic5 attendee_export.ui > attendee_export.py",
+            "problemMatcher": []
+        }
+    ]
+}
