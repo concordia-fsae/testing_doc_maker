@@ -3,9 +3,9 @@ import requests
 import re
 
 from functools import partial
-from PyQt5.QtCore import QRegExp, QDate, QTime
+from PyQt5.QtCore import QRegExp, QDate, QTime, QObject
 from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QInputDialog, QLineEdit, QFileDialog, QMessageBox, QTextEdit, QLineEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QInputDialog, QLineEdit, QFileDialog, QMessageBox, QTextEdit, QLineEdit, QButtonGroup
 from homepage import Ui_MainWindow
 from openpyxl import load_workbook
 
@@ -54,7 +54,6 @@ class AppWindow(QMainWindow):
         self.alphanum_fields = [self.ui.edit_part, self.ui.edit_loc_other]
         self.num_fields = [self.ui.edit_doc_num]
         self.fields = self.alpha_fields + self.alphanum_fields + self.num_fields
-
 
         for field in self.fields:
             field.focusOutEvent = partial(self.processInput, field)
@@ -106,14 +105,20 @@ class AppWindow(QMainWindow):
         if(not self.ui.edit_loc_other.isEnabled()):
             self.ui.edit_loc_other.setStyleSheet("")
 
+        for radio in self.radios:
+            if(radio.checkedButton() == None):
+                for button in radio.buttons():
+                    button.setStyleSheet("background-color: rgb(255, 143, 145);")
+            else:
+                for button in radio.buttons():
+                    button.setStyleSheet("")
+
 
     def processInput(self, field, dis):
         if(field.text() == "" or field.text() == " "):
             field.setStyleSheet("background-color: rgb(255, 143, 145);")
         else:
             field.setStyleSheet("")
-        #if(not complete):
-        #    print("One or more fields are either not complete, or contain invalid characters")
 
     
     def resetColor(self, field, dis):
@@ -142,6 +147,15 @@ class AppWindow(QMainWindow):
             doc_num.setStyleSheet("background-color: rgb(255, 143, 145);")            
             complete = False
             print(doc_num.objectName(), " is not filled out correctly")
+
+
+        ### validate radio buttons
+        self.radios = [self.ui.radio_type, self.ui.radio_loc]
+        for radio in self.radios:
+            if(radio.checkedButton() == None):
+                for button in radio.buttons():
+                    button.setStyleSheet("background-color: rgb(255, 143, 145);")
+
 
         if(complete):
             self.submitForm()
