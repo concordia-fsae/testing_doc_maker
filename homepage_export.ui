@@ -156,10 +156,34 @@
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>135</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="focusPolicy">
                     <enum>Qt::StrongFocus</enum>
                    </property>
+                   <property name="contextMenuPolicy">
+                    <enum>Qt::DefaultContextMenu</enum>
+                   </property>
                    <property name="autoFillBackground">
+                    <bool>true</bool>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true"/>
+                   </property>
+                   <property name="inputMask">
+                    <string/>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="dragEnabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="clearButtonEnabled">
                     <bool>true</bool>
                    </property>
                   </widget>
@@ -189,6 +213,15 @@
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>135</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="clearButtonEnabled">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
@@ -375,11 +408,23 @@
                      </item>
                      <item>
                       <widget class="QLineEdit" name="edit_type_other">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                          <horstretch>0</horstretch>
                          <verstretch>0</verstretch>
                         </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>135</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true"/>
                        </property>
                        <property name="text">
                         <string/>
@@ -389,6 +434,9 @@
                        </property>
                        <property name="placeholderText">
                         <string>Other</string>
+                       </property>
+                       <property name="clearButtonEnabled">
+                        <bool>true</bool>
                        </property>
                       </widget>
                      </item>
@@ -481,11 +529,23 @@
                      </item>
                      <item>
                       <widget class="QLineEdit" name="edit_loc_other">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                          <horstretch>0</horstretch>
                          <verstretch>0</verstretch>
                         </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>135</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true"/>
                        </property>
                        <property name="text">
                         <string/>
@@ -495,6 +555,9 @@
                        </property>
                        <property name="placeholderText">
                         <string>Other</string>
+                       </property>
+                       <property name="clearButtonEnabled">
+                        <bool>true</bool>
                        </property>
                       </widget>
                      </item>
@@ -561,8 +624,17 @@
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>135</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="placeholderText">
                     <string>CFR19</string>
+                   </property>
+                   <property name="clearButtonEnabled">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
@@ -595,8 +667,17 @@
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>135</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="placeholderText">
                     <string>Testing</string>
+                   </property>
+                   <property name="clearButtonEnabled">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
@@ -631,8 +712,17 @@
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>135</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
                      <property name="placeholderText">
                       <string>10997</string>
+                     </property>
+                     <property name="clearButtonEnabled">
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
@@ -682,7 +772,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>133</width>
+                     <width>135</width>
                      <height>300</height>
                     </size>
                    </property>
@@ -838,7 +928,11 @@
    </widget>
    <addaction name="menuFile"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="sizeGripEnabled">
+    <bool>true</bool>
+   </property>
+  </widget>
   <action name="actionOpen_Template_File">
    <property name="text">
     <string>Open Template File</string>
