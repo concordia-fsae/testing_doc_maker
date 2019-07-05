@@ -2,15 +2,14 @@
 
 import sys
 from functools import partial
-from dataclasses import dataclass
 import json
 import requests
 
 #from PyQt5.QtCore import QRegExp, QDate, QTime, QObject
 #from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtCore import QRegExp, QDate
+from PyQt5.QtCore import QRegExp, QDate, QTime
 from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QRadioButton
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QTreeWidgetItem
 from openpyxl import load_workbook
 from windows.homepage import Ui_MainWindow
@@ -24,22 +23,12 @@ FORM_ID = "1FAIpQLSe1iCukrB_HYS1Dvl8rjtazTZyAza1ArFZ-d3HaE-5gXTyWKA"
 FORM_RESP_URL = "https://docs.google.com/forms/u/2/d/e/" + FORM_ID + "/formResponse"
 
 
-### Roster Section
-@dataclass
-class Member:
-    '''Member helper dataclass'''
-    first_name: str
-    last_name: str
-    phone_number: str
-    signed_waiver: bool
-
 ### PyQT Section
 
 class AppWindow(QMainWindow):
     '''Program Main Window'''
     def __init__(self):
         super(AppWindow, self).__init__()
-        #super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.attendee = AttendeeWindow(self)
@@ -54,11 +43,13 @@ class AppWindow(QMainWindow):
         self.ui.label_create_roster.setVisible(False)
         self.ui.label_roster.setVisible(False)
 
-        self.ui.btn_save_doc.clicked.connect(self.save_file_dialog)
-        self.ui.btn_open_template.clicked.connect(self.open_file_dialog)
-        self.ui.btn_submit_form.clicked.connect(self.validate_input)
-        self.ui.btn_open_roster.clicked.connect(self.open_roster)
-        self.ui.btn_create_roster.clicked.connect(self.create_roster)
+        self.ui.btn_save_doc.clicked.connect(self.save_testing_doc_dialog)
+        self.ui.btn_open_template.clicked.connect(self.open_testing_doc_dialog)
+        self.ui.btn_submit_form.clicked.connect(self.submit_form)
+        self.ui.btn_export.clicked.connect(self.export_general)
+        self.ui.btn_import.clicked.connect(self.import_general)
+        self.ui.btn_open_roster.clicked.connect(self.open_roster_dialog)
+        self.ui.btn_create_roster.clicked.connect(self.create_roster_dialog)
         self.ui.btn_save_roster.clicked.connect(self.save_roster)
         self.ui.btn_close_roster.clicked.connect(self.close_roster)
         self.ui.btn_modify_attending.clicked.connect(self.open_attendee)
@@ -68,8 +59,8 @@ class AppWindow(QMainWindow):
 
         self.ui.tree_roster.clicked.connect(self.member_selected)
 
-        self.ui.actionOpen_Template_File.triggered.connect(self.open_file_dialog)
-        self.ui.actionSave_Testing_Doc.triggered.connect(self.save_file_dialog)
+        self.ui.actionOpen_Template_File.triggered.connect(self.open_testing_doc_dialog)
+        self.ui.actionSave_Testing_Doc.triggered.connect(self.save_testing_doc_dialog)
 
         self.roster_file_path = ""
         self.roster = {}
@@ -105,7 +96,7 @@ class AppWindow(QMainWindow):
         self.show()
 
 
-    def open_file_dialog(self):
+    def open_testing_doc_dialog(self):
         '''Start the "open file" dialog for selecting the testing doc template'''
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -121,7 +112,7 @@ class AppWindow(QMainWindow):
             self.ui.file_path.setText(self.doc_template_path)
 
 
-    def save_file_dialog(self):
+    def save_testing_doc_dialog(self):
         '''Start the "save file" dialog for saving the completed testing doc'''
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -131,7 +122,7 @@ class AppWindow(QMainWindow):
             pass
 
 
-    def open_roster(self):
+    def open_roster_dialog(self):
         '''Start the "open file" dialog for selecting the roster file'''
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -152,7 +143,7 @@ class AppWindow(QMainWindow):
 
                     try:
                         self.roster = json.load(roster)
-                        if self.roster:
+                        if self.roster and not self.roster == {}:
                             for member in self.roster:
                                 self.ui.tree_roster.addTopLevelItem(
                                     QTreeWidgetItem(
@@ -166,18 +157,21 @@ class AppWindow(QMainWindow):
                                             self.roster[member]["trailer"], \
                                         ]
                                     ))
+                        else:
+                            QMessageBox.information(self, "Empty Roster", \
+                                "Roster file contains no members")
                     except json.decoder.JSONDecodeError:
                         QMessageBox.information(self, "Empty Roster", \
                             "Roster file contains no members")
 
 
             except IOError:
-                QMessageBox.information(self, "Unable to open file", \
+                QMessageBox.critical(self, "Unable to open file", \
                     "There was an error opening \"%s\"" % file_name)
                 self.ui.label_roster.setText("Error opening file")
 
 
-    def create_roster(self):
+    def create_roster_dialog(self):
         '''Start the "save file" dialog for saving the completed testing doc'''
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -185,7 +179,7 @@ class AppWindow(QMainWindow):
             "", "JSON File (*.json)", options=options)
         if file_name:
             if not ".json" in file_name.lower():
-                file_name = file_name + ".json"
+                file_name += ".json"
 
             try:
                 with open(file_name, "w+") as roster:
@@ -198,10 +192,115 @@ class AppWindow(QMainWindow):
                     self.ui.btn_save_roster.setEnabled(True)
                     self.ui.btn_add_member.setEnabled(True)
             except IOError:
-                QMessageBox.information(self, "Unable to open file", \
+                QMessageBox.critical(self, "Unable to open file", \
                     "There was an error opening \"%s\"" % file_name)
                 self.ui.label_create_roster.setText("Error creating Roster File")
 
+    def export_general_dialog(self):
+        '''Start the "save file" dialog for saving the General Info template file'''
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save General Info", \
+            "", "JSON File (*.json)", options=options)
+        if file_name:
+            if not ".json" in file_name.lower():
+                file_name += ".json"
+                self.ui.btn_export.setEnabled(False)
+                return file_name
+            else:
+                return None
+
+
+    def import_general_dialog(self):
+        '''Start the "open file" dialog for selecting a General Info JSON file'''
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        file_name, _ = QFileDialog.getOpenFileName(self, "Select Template File", \
+            "", "JSON Files (*.json)", options=options)
+        if file_name:
+            try:
+                with open(file_name, "r") as template_file:
+                    return json.load(template_file)
+            except IOError:
+                QMessageBox.critical(self, "Couldn't open file", \
+                    "Couldn't open %s file for reading", file_name)
+        else:
+            return None
+
+
+    def export_general(self):
+        '''Export all the information from the General Info page
+            for later re-importing'''
+        if self.validate_input():
+            return
+        path = self.export_general_dialog()
+        if path is None:
+            return
+
+        export = {}
+        export["requestor"] = self.ui.edit_requestor.text()
+        export["lead"] = self.ui.edit_lead.text()
+        export["date"] = self.ui.date_session.date().toString()
+        export["start_time"] = self.ui.time_start.time().toString()
+        export["end_time"] = self.ui.time_end.time().toString()
+        export["type"] = self.ui.radio_type.checkedButton().text()
+        export["type_other"] = self.ui.radio_type_other.text()
+        export["loc"] = self.ui.radio_loc.checkedButton().text()
+        export["loc_other"] = self.ui.radio_loc_other.text()
+        export["part"] = self.ui.edit_part.text()
+        export["cat"] = self.ui.edit_cat.text()
+        export["doc_num"] = self.ui.edit_doc_num.text()
+        export["desc"] = self.ui.edit_desc.toPlainText()
+
+        try:
+            with open(path, "w+") as export_file:
+                json.dump(export, export_file)
+        except IOError:
+                QMessageBox.critical(self, "Unable to write file", \
+                    "There was an error writing \"%s\"" % path)
+
+
+    def import_general(self):
+        '''Import all the information on the General Info page from
+            a JSON file'''
+
+        
+        general = self.import_general_dialog()
+        if general is None:
+            return
+            
+        try:
+            self.ui.edit_requestor.setText(general["requestor"])
+            self.ui.edit_lead.setText(general["lead"])
+            self.ui.date_session.setDate(QDate().fromString(general["date"]))
+            self.ui.time_start.setTime(QTime().fromString(general["start_time"]))
+            self.ui.time_end.setTime(QTime().fromString(general["end_time"]))
+            self.ui.radio_type_other.setText(general["type_other"])
+            self.ui.radio_loc_other.setText(general["loc_other"])
+            self.ui.edit_part.setText(general["part"])
+            self.ui.edit_cat.setText(general["cat"])
+            self.ui.edit_doc_num.setText(general["doc_num"])
+            self.ui.edit_desc.setText(general["desc"])
+
+            
+
+
+            if general["type"] == "Dyno":
+                self.ui.radio_dyno.setChecked(True)
+            elif general["type"] == "Track":
+                self.ui.radio_track.setChecked(True)
+            else:
+                self.ui.radio_loc_other.setChecked(True)
+
+            if general["loc"] == "Cage":
+                self.ui.radio_loc_cage.setChecked(True)
+            elif general["loc"] == "Loading Dock":
+                self.ui.radio_loc_loading.setChecked(True)
+            elif general["loc"] == "Casino":
+                self.ui.radio_loc_casino.setChecked(True)
+
+        except KeyError:
+            QMessageBox.critical(self, "Improperly Formatted File", "The selected JSON file is corrupt or improperly formatted.")
 
     def save_roster(self):
         '''Save the roster file to disk'''
@@ -209,6 +308,8 @@ class AppWindow(QMainWindow):
 
         with open(self.roster_file_path, "w") as roster:
             json.dump(self.roster, roster)
+
+        self.ui.btn_save_roster.setEnabled(False)
 
 
     def update_json(self):
@@ -305,6 +406,7 @@ class AppWindow(QMainWindow):
             self.ui.btn_modify_member.setEnabled(False)
             self.ui.btn_remove_member.setEnabled(False)
 
+        self.ui.btn_save_roster.setEnabled(True)
 
         if len(self.ui.tree_roster.selectedItems()) > 1:
             self.ui.btn_modify_member.setText("Modify Members")
@@ -350,6 +452,8 @@ class AppWindow(QMainWindow):
                 for button in radio.buttons():
                     button.setStyleSheet("")
 
+        self.ui.btn_save_doc.setEnabled(True)
+
 
     def process_input(self, field, dis):
         '''Process the user input when they finish editing the given'''
@@ -357,6 +461,8 @@ class AppWindow(QMainWindow):
             field.setStyleSheet("background-color: rgb(255, 143, 145);")
         else:
             field.setStyleSheet("")
+        
+        self.ui.btn_save_doc.setEnabled(True)
 
 
     def reset_color(self, field, dis):
@@ -405,15 +511,17 @@ class AppWindow(QMainWindow):
 
 
         if complete:
-            self.submit_form()
+            return 0
         else:
+            return 1
             print("Data is not complete")
 
 
     def submit_form(self):
         '''Submit the Google Form'''
-        print("Submitting form")
 
+        if self.validate_input():
+            return
         other_type_resp = other_loc_resp = ""
         other_type = self.ui.radio_type.checkedButton().text()
         other_loc = self.ui.radio_loc.checkedButton().text()
@@ -455,7 +563,11 @@ class AppWindow(QMainWindow):
 
     def open_attendee(self):
         '''Open the attendee list window'''
-        self.attendee.show()
+        if self.ui.btn_close_roster.isEnabled():
+            self.attendee.show()
+        else:
+            QMessageBox.information(self, "Roster Not Open", \
+                "Please open a Roster first by going to the \"Roster Management\" tab.", )
 
 class AttendeeWindow(QDialog):
     '''Attendee list dialog'''
