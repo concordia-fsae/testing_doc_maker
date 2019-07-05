@@ -3,5 +3,6 @@
     "python.linting.pylintArgs": [
         "--extension-pkg-whitelist=numpy",
         "--disable=no-name-in-module"
-    ]
+    ],
+    "python.jediEnabled": true
 }

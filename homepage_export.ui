@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>666</width>
+    <width>690</width>
     <height>716</height>
    </rect>
   </property>
@@ -65,7 +65,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>622</width>
+             <width>646</width>
              <height>551</height>
             </rect>
            </property>
@@ -1069,40 +1069,78 @@
             <height>0</height>
            </size>
           </property>
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::MultiSelection</enum>
+           <enum>QAbstractItemView::ExtendedSelection</enum>
           </property>
           <property name="sortingEnabled">
            <bool>true</bool>
           </property>
+          <attribute name="headerCascadingSectionResizes">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="headerDefaultSectionSize">
+           <number>90</number>
+          </attribute>
+          <attribute name="headerHighlightSections">
+           <bool>false</bool>
+          </attribute>
+          <column>
+           <property name="text">
+            <string>Member ID</string>
+           </property>
+           <property name="textAlignment">
+            <set>AlignCenter</set>
+           </property>
+          </column>
           <column>
            <property name="text">
             <string>First Name</string>
+           </property>
+           <property name="textAlignment">
+            <set>AlignCenter</set>
            </property>
           </column>
           <column>
            <property name="text">
             <string>Last Name</string>
            </property>
+           <property name="textAlignment">
+            <set>AlignCenter</set>
+           </property>
           </column>
           <column>
            <property name="text">
-            <string>Cell Phone Number</string>
+            <string>Cell #</string>
+           </property>
+           <property name="textAlignment">
+            <set>AlignCenter</set>
            </property>
           </column>
           <column>
            <property name="text">
             <string>Waiver Signed</string>
            </property>
+           <property name="textAlignment">
+            <set>AlignCenter</set>
+           </property>
           </column>
           <column>
            <property name="text">
             <string>Truck Cert</string>
            </property>
+           <property name="textAlignment">
+            <set>AlignCenter</set>
+           </property>
           </column>
           <column>
            <property name="text">
             <string>Trailer Cert</string>
+           </property>
+           <property name="textAlignment">
+            <set>AlignCenter</set>
            </property>
           </column>
          </widget>
@@ -1110,21 +1148,30 @@
         <item row="2" column="0">
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
-           <widget class="QPushButton" name="pushButton">
+           <widget class="QPushButton" name="btn_add_member">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Add Member</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_2">
+           <widget class="QPushButton" name="btn_modify_member">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Modify Member</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_3">
+           <widget class="QPushButton" name="btn_remove_member">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Remove Member(s)</string>
             </property>
@@ -1143,7 +1190,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>666</width>
+     <width>690</width>
      <height>21</height>
     </rect>
    </property>
@@ -1174,6 +1221,43 @@
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>edit_requestor</tabstop>
+  <tabstop>edit_lead</tabstop>
+  <tabstop>btn_modify_attending</tabstop>
+  <tabstop>date_session</tabstop>
+  <tabstop>time_start</tabstop>
+  <tabstop>time_end</tabstop>
+  <tabstop>radio_dyno</tabstop>
+  <tabstop>radio_track</tabstop>
+  <tabstop>radio_type_other</tabstop>
+  <tabstop>edit_type_other</tabstop>
+  <tabstop>radio_loc_cage</tabstop>
+  <tabstop>radio_loc_loading</tabstop>
+  <tabstop>radio_loc_casino</tabstop>
+  <tabstop>radio_loc_other</tabstop>
+  <tabstop>edit_loc_other</tabstop>
+  <tabstop>edit_part</tabstop>
+  <tabstop>edit_cat</tabstop>
+  <tabstop>edit_doc_num</tabstop>
+  <tabstop>btn_get_num</tabstop>
+  <tabstop>edit_desc</tabstop>
+  <tabstop>btn_export</tabstop>
+  <tabstop>btn_submit_form</tabstop>
+  <tabstop>main_tabs</tabstop>
+  <tabstop>scroll_fields</tabstop>
+  <tabstop>btn_import</tabstop>
+  <tabstop>btn_open_template</tabstop>
+  <tabstop>btn_save_doc</tabstop>
+  <tabstop>btn_open_roster</tabstop>
+  <tabstop>btn_close_roster</tabstop>
+  <tabstop>btn_save_roster</tabstop>
+  <tabstop>btn_create_roster</tabstop>
+  <tabstop>tree_roster</tabstop>
+  <tabstop>btn_add_member</tabstop>
+  <tabstop>btn_modify_member</tabstop>
+  <tabstop>btn_remove_member</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
  <buttongroups>
