@@ -53,6 +53,7 @@ class AppWindow(QMainWindow):
         self.ui.btn_submit_form.clicked.connect(self.validateInput)
         self.ui.btn_open_roster.clicked.connect(self.openRoster)
         self.ui.btn_create_roster.clicked.connect(self.createRoster)
+        self.ui.btn_save_roster.clicked.connect(self.saveRoster)
         self.ui.btn_close_roster.clicked.connect(self.closeRoster)
         self.ui.btn_modify_attending.clicked.connect(self.openAttendee)
 
@@ -60,6 +61,7 @@ class AppWindow(QMainWindow):
         self.ui.actionSave_Testing_Doc.triggered.connect(self.saveFileDialog)
 
         self.roster_file_path = ""
+        self.roster = {}
 
         self.radios = [self.ui.radio_type, self.ui.radio_loc]
         self.ui.radio_type.buttonClicked.connect(partial(self.processRadioInput))
@@ -115,6 +117,7 @@ class AppWindow(QMainWindow):
         if file_name:
             pass
 
+
     def openRoster(self):
         '''Start the "open file" dialog for selecting the roster file'''
         options = QFileDialog.Options()
@@ -122,29 +125,33 @@ class AppWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Select Roster File", \
             "", "JSON Files (*.json)", options=options)
         if file_name:
-            roster_file_path = file_name
+            self.roster_file_path = file_name
             try:
-                with open(roster_file_path, "r") as roster:
-                    self.ui.label_roster.setText(roster_file_path)
+                with open(self.roster_file_path, "r") as roster:
+                    self.ui.label_roster.setText(self.roster_file_path)
                     self.ui.label_roster.setVisible(True)
                     self.ui.btn_open_roster.setText("Roster File Opened")
                     self.ui.btn_open_roster.setEnabled(False)
                     self.ui.btn_close_roster.setEnabled(True)
                     self.ui.btn_create_roster.setEnabled(False)
                     self.ui.btn_save_roster.setEnabled(True)
+
+
+                    try:
+                        roster_json = json.load(roster)
+                        if len(roster_json) > 0:
+                            for member in roster_json:
+                                pass
+                                # TODO add members to tree view
+                    except json.decoder.JSONDecodeError:
+                        QMessageBox.information(self, "Empty Roster", \
+                            "Roster file contains no members")
+
+
             except IOError:
-                QMessageBox.information(self, "Unable to open file",
-                                    "There was an error opening \"%s\"" % file_name)
+                QMessageBox.information(self, "Unable to open file", \
+                    "There was an error opening \"%s\"" % file_name)
                 self.ui.label_roster.setText("Error opening file")
-
-
-    def closeRoster(self):
-        self.ui.btn_open_roster.setEnabled(True)
-        self.ui.btn_open_roster.setText("Open Roster File")
-        self.ui.btn_close_roster.setEnabled(False)
-        self.ui.btn_save_roster.setEnabled(False)
-        self.ui.btn_create_roster.setEnabled(True)
-        self.ui.label_roster.setVisible(False)
 
 
     def createRoster(self):
@@ -171,6 +178,29 @@ class AppWindow(QMainWindow):
                 QMessageBox.information(self, "Unable to open file",
                                     "There was an error opening \"%s\"" % file_name)
                 self.ui.label_create_roster.setText("Error creating Roster File")
+
+
+    def saveRoster(self):
+        self.ui.tree_roster.addTopLevelItem(QTreeWidgetItem(["asdf", "asdf", "1245", "asdf"]))
+
+        for item in range(0, self.ui.tree_roster.topLevelItemCount()):
+            member = self.ui.tree_roster.topLevelItem(item)
+            self.roster[member.text(0)] = {"first_name":member.text(1), "last_name":member.text(2), \
+                "cell_num":member.text(3), "waiver":member.text(4), "truck":member.text(5), "trailer":member.text(6)}
+
+        with open(self.roster_file_path, "w") as roster:
+            json.dump(self.roster, roster)
+
+    def closeRoster(self):
+        self.ui.btn_open_roster.setEnabled(True)
+        self.ui.btn_open_roster.setText("Open Roster File")
+        self.ui.btn_close_roster.setEnabled(False)
+        self.ui.btn_save_roster.setEnabled(False)
+        self.ui.btn_create_roster.setEnabled(True)
+        self.ui.label_roster.setVisible(False)
+
+        for item in range(0, self.ui.tree_roster.topLevelItemCount()):
+            self.ui.tree_roster.takeTopLevelItem(item)
 
 
     def processRadioInput(self, field):
