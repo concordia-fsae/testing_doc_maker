@@ -13,9 +13,9 @@ from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QTreeWidgetItem
 from openpyxl import load_workbook
-from homepage import Ui_MainWindow
-from attendee import Ui_attendee_list
-from member import Ui_member_mod
+from windows.homepage import Ui_MainWindow
+from windows.attendee import Ui_attendee_list
+from windows.member import Ui_member_mod
 
 
 ### Form Response Vars
