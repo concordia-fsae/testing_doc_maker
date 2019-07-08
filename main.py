@@ -9,7 +9,7 @@ import requests
 #from PyQt5.QtGui import QRegExpValidator
 from PyQt5.QtCore import QRegExp, QDate, QTime
 from PyQt5.QtGui import QRegExpValidator
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QRadioButton
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QTreeWidgetItem
 from openpyxl import load_workbook
 from windows.homepage import Ui_MainWindow
@@ -32,6 +32,7 @@ class AppWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.attendee = AttendeeWindow(self)
+        self.member.ui.buttonBox.rejected.connect(self.add_cancel)
         self.member = MemberWindow(self)
 
         today = QDate.currentDate()
@@ -57,7 +58,10 @@ class AppWindow(QMainWindow):
         self.ui.btn_modify_member.clicked.connect(partial(self.member_window, "modify"))
         self.ui.btn_remove_member.clicked.connect(self.remove_member)
 
-        self.ui.tree_roster.clicked.connect(self.member_selected)
+        self.ui.tree_roster.itemActivated.connect(partial(self.member_window, "modify"))
+        self.ui.tree_roster.itemSelectionChanged.connect(self.member_selected)
+        self.ui.tree_roster.sortByColumn(0, 0)
+
 
         self.ui.actionOpen_Template_File.triggered.connect(self.open_testing_doc_dialog)
         self.ui.actionSave_Testing_Doc.triggered.connect(self.save_testing_doc_dialog)
@@ -132,38 +136,44 @@ class AppWindow(QMainWindow):
             self.roster_file_path = file_name
             try:
                 with open(self.roster_file_path, "r") as roster:
-                    self.ui.label_roster.setText(self.roster_file_path)
-                    self.ui.label_roster.setVisible(True)
-                    self.ui.btn_open_roster.setText("Roster File Opened")
-                    self.ui.btn_open_roster.setEnabled(False)
-                    self.ui.btn_close_roster.setEnabled(True)
-                    self.ui.btn_create_roster.setEnabled(False)
-                    self.ui.btn_save_roster.setEnabled(True)
-                    self.ui.btn_add_member.setEnabled(True)
 
                     try:
                         self.roster = json.load(roster)
-                        if self.roster and not self.roster == {}:
-                            for member in self.roster:
-                                self.ui.tree_roster.addTopLevelItem(
-                                    QTreeWidgetItem(
-                                        [
-                                            member, \
-                                            self.roster[member]["first_name"], \
-                                            self.roster[member]["last_name"], \
-                                            self.roster[member]["cell_num"], \
-                                            self.roster[member]["waiver"], \
-                                            self.roster[member]["truck"], \
-                                            self.roster[member]["trailer"], \
-                                        ]
-                                    ))
-                        else:
-                            QMessageBox.information(self, "Empty Roster", \
-                                "Roster file contains no members")
                     except json.decoder.JSONDecodeError:
+                        pass
+
+                    if self.roster and not self.roster == {}:
+                        for member in self.roster:
+                            self.ui.tree_roster.addTopLevelItem(
+                                QTreeWidgetItem(
+                                    [
+                                        member, \
+                                        self.roster[member]["first_name"], \
+                                        self.roster[member]["last_name"], \
+                                        self.roster[member]["cell_num"], \
+                                        self.roster[member]["waiver"], \
+                                        self.roster[member]["truck"], \
+                                        self.roster[member]["trailer"], \
+                                    ]
+                                ))
+                    else:
                         QMessageBox.information(self, "Empty Roster", \
                             "Roster file contains no members")
+                    
+                    ui = self.ui
+                    ui.label_roster.setText(self.roster_file_path)
+                    ui.label_roster.setVisible(True)
+                    ui.btn_open_roster.setText("Roster File Opened")
+                    ui.btn_open_roster.setEnabled(False)
+                    ui.btn_create_roster.setEnabled(False)
+                    ui.btn_close_roster.setEnabled(True)
+                    ui.btn_save_roster.setEnabled(True)
+                    ui.btn_add_member.setEnabled(True)   
 
+            except TypeError:
+                QMessageBox.critical(self, "Improperly Formatted File", \
+                    "The selected JSON file " \
+                    "is corrupt or improperly formatted.")
 
             except IOError:
                 QMessageBox.critical(self, "Unable to open file", \
@@ -195,6 +205,7 @@ class AppWindow(QMainWindow):
                 QMessageBox.critical(self, "Unable to open file", \
                     "There was an error opening \"%s\"" % file_name)
                 self.ui.label_create_roster.setText("Error creating Roster File")
+
 
     def export_general_dialog(self):
         '''Start the "save file" dialog for saving the General Info template file'''
@@ -256,19 +267,19 @@ class AppWindow(QMainWindow):
             with open(path, "w+") as export_file:
                 json.dump(export, export_file)
         except IOError:
-                QMessageBox.critical(self, "Unable to write file", \
-                    "There was an error writing \"%s\"" % path)
+            QMessageBox.critical(self, "Unable to write file", \
+                "There was an error writing \"%s\"" % path)
 
 
     def import_general(self):
         '''Import all the information on the General Info page from
             a JSON file'''
 
-        
+
         general = self.import_general_dialog()
         if general is None:
             return
-            
+
         try:
             self.ui.edit_requestor.setText(general["requestor"])
             self.ui.edit_lead.setText(general["lead"])
@@ -281,9 +292,6 @@ class AppWindow(QMainWindow):
             self.ui.edit_cat.setText(general["cat"])
             self.ui.edit_doc_num.setText(general["doc_num"])
             self.ui.edit_desc.setText(general["desc"])
-
-            
-
 
             if general["type"] == "Dyno":
                 self.ui.radio_dyno.setChecked(True)
@@ -302,6 +310,9 @@ class AppWindow(QMainWindow):
         except KeyError:
             QMessageBox.critical(self, "Improperly Formatted File", "The selected JSON file is corrupt or improperly formatted.")
 
+        self.validate_input()
+
+        
     def save_roster(self):
         '''Save the roster file to disk'''
         self.update_json()
@@ -329,50 +340,72 @@ class AppWindow(QMainWindow):
         '''Close the Roster File'''
         self.ui.btn_open_roster.setEnabled(True)
         self.ui.btn_open_roster.setText("Open Roster File")
-        self.ui.btn_close_roster.setEnabled(False)
-        self.ui.btn_save_roster.setEnabled(False)
         self.ui.btn_create_roster.setEnabled(True)
         self.ui.label_roster.setVisible(False)
-        self.ui.btn_add_member.setEnabled(False)
-        self.ui.btn_modify_member.setEnabled(False)
-        self.ui.btn_remove_member.setEnabled(False)
+
+        for member in [self.ui.btn_close_roster, self.ui.btn_save_roster, \
+            self.ui.btn_add_member, self.ui.btn_modify_member, self.ui.btn_remove_member]:
+            member.setEnabled(False)
 
         # TODO add confirmation before clearing list
         self.ui.tree_roster.clear()
 
 
     def member_window(self, purpose):
-        '''Open the member mod window'''
-        self.member.ui.buttonBox.rejected.connect(self.add_cancel)
+        '''Open the member add/modify window'''
         if purpose == "add":
             self.member.setWindowTitle("New Member")
             self.member.ui.buttonBox.accepted.connect(self.add_member)
             self.member.show()
         elif purpose == "modify":
             tree = self.ui.tree_roster
-            if tree.selectedItems() == 1:
-                selected = tree.topLevelItem(tree.selectedItems())
+            m = self.member.ui
+            if len(tree.selectedItems()) == 1:
+                selected = tree.selectedItems()[0]
 
-                self.member.ui.edit_first_name = selected.text(1)
+                members = [m.edit_id, m.edit_first_name, m.edit_last_name, m.edit_number]
+                for ind in range(0, len(members)):
+                    members[ind].setText(selected.text(ind))
+
+                m.check_waiver.setChecked(bool(selected.text(4)))
+                m.check_truck.setChecked(bool(selected.text(5)))
+                m.check_trailer.setChecked(bool(selected.text(6)))
+
                 self.member.setWindowTitle("Modify Member")
+                m.buttonBox.accepted.connect(partial(self.save_member, selected))
+                self.member.show()
+            else:
+                selected = tree.selectedItems()
+                for member in [m.edit_id, m.edit_first_name, m.edit_last_name, m.edit_number]:
+                    member.setDisabled(True)
+
+                for member in [m.check_waiver, m.check_truck, m.check_trailer]:
+                    member.setTristate(True)
+                    member.setCheckState(1)
+
+                self.member.setWindowTitle("Modify Members")
+                m.buttonBox.accepted.connect(partial(self.save_member, selected))
+                self.member.show()
+                
 
 
     def add_member(self):
         '''Add a member to the roster'''
         tree = self.ui.tree_roster
+        m = self.member.ui
         complete = True
         duplicate = False
 
-        mn = self.member.ui.edit_id.text()
-        fn = self.member.ui.edit_first_name.text()
-        ln = self.member.ui.edit_last_name.text()
-        cn = self.member.ui.edit_number.text()
-        w = str(self.member.ui.check_waiver.isChecked())
-        tu = str(self.member.ui.check_truck.isChecked())
-        tl = str(self.member.ui.check_trailer.isChecked())
-        valid = [self.member.ui.edit_id.hasAcceptableInput(), self.member.ui.edit_number.hasAcceptableInput()]
+        e_mn = m.edit_id.text()
+        e_fn = m.edit_first_name.text()
+        e_ln = m.edit_last_name.text()
+        e_cn = m.edit_number.text()
+        c_w = str(m.check_waiver.isChecked())
+        c_tu = str(m.check_truck.isChecked())
+        c_tl = str(m.check_trailer.isChecked())
+        valid = [m.edit_id.hasAcceptableInput(), m.edit_number.hasAcceptableInput()]
 
-        if any(k in self.roster for k in (mn, cn)):
+        if any(k in self.roster for k in (e_mn, e_cn)):
             complete = False
             duplicate = True
 
@@ -386,10 +419,56 @@ class AppWindow(QMainWindow):
                     "Duplicate information found. Please double check all data.")
 
         if complete:
-            tree.addTopLevelItem(QTreeWidgetItem([mn, fn, ln, cn, w, tu, tl]))
+            tree.addTopLevelItem(QTreeWidgetItem([e_mn, e_fn, e_ln, e_cn, c_w, c_tu, c_tl]))
             self.update_json()
             self.member.close()
             self.member = MemberWindow(self)
+
+
+    def save_member(self, member):
+        '''Save the member(s) that was/were modified'''
+        if type(member) != list:
+            '''Add a member to the roster'''
+            tree = self.ui.tree_roster
+            m = self.member.ui
+            complete = True
+            duplicate = False
+
+            e_mn = m.edit_id.text()
+            e_fn = m.edit_first_name.text()
+            e_ln = m.edit_last_name.text()
+            e_cn = m.edit_number.text()
+            c_w = str(m.check_waiver.isChecked())
+            c_tu = str(m.check_truck.isChecked())
+            c_tl = str(m.check_trailer.isChecked())
+            data = [e_mn, e_fn, e_ln, e_cn, c_w, c_tu, c_tl]
+            valid = [m.edit_id.hasAcceptableInput(), m.edit_number.hasAcceptableInput()]
+
+            curr = self.roster.pop(e_mn)
+
+            if any(k in self.roster for k in (e_mn, e_cn)):
+                complete = False
+                duplicate = True
+
+            if not (valid[0] and valid[1]):
+                complete = False
+                QMessageBox.information(self, "Value Error", \
+                        "Member ID or Phone Number is invalid.")
+
+            if duplicate:
+                QMessageBox.information(self, "Duplicate Found", \
+                        "Duplicate information found. Please double check all data.")
+
+            if complete:
+                #tree.addTopLevelItem(QTreeWidgetItem([e_mn, e_fn, e_ln, e_cn, c_w, c_tu, c_tl]))
+                for ind in enumerate(data):
+                    member.setText(ind[0], ind[1])
+
+                self.update_json()
+                self.member.close()
+                self.member = MemberWindow(self)
+        elif len(member) > 1:
+            pass
 
 
     def modify_member(self):
@@ -397,9 +476,9 @@ class AppWindow(QMainWindow):
         pass
 
 
-    def member_selected(self):
+    def member_selected(self, dis=""):
         '''Runs when the selection in the tree is changed'''
-        if not self.ui.tree_roster.selectedItems is None:
+        if self.ui.tree_roster.selectedItems():
             self.ui.btn_modify_member.setEnabled(True)
             self.ui.btn_remove_member.setEnabled(True)
         else:
@@ -432,8 +511,7 @@ class AppWindow(QMainWindow):
             self.member = MemberWindow(self)
 
 
-
-    def process_radio_input(self, field):
+    def process_radio_input(self, field=""):
         '''Process the radio input'''
         self.ui.edit_loc_other.setEnabled(self.ui.radio_loc_other.isChecked())
         self.ui.edit_type_other.setEnabled(self.ui.radio_type_other.isChecked())
@@ -481,8 +559,8 @@ class AppWindow(QMainWindow):
 
                 complete = False
                 field.setStyleSheet("background-color: rgb(255, 143, 145);")
-                # print(field.objectName(), " is not filled out correctly")
-
+            else:
+                field.setStyleSheet("")
 
         ### validate alphanumeric fields
         for field in self.alphanum_fields:
@@ -492,15 +570,16 @@ class AppWindow(QMainWindow):
 
                 complete = False
                 field.setStyleSheet("background-color: rgb(255, 143, 145);")
-                # print(field.objectName(), " is not filled out correctly")
-
+            else:
+                field.setStyleSheet("")
 
         ### validate testing doc number
         doc_num = self.ui.edit_doc_num
         if doc_num.text() == "" or len(doc_num.text()) < 5:
             doc_num.setStyleSheet("background-color: rgb(255, 143, 145);")
             complete = False
-            # print(doc_num.objectName(), " is not filled out correctly")
+        else:
+            doc_num.setStyleSheet("")
 
 
         ### validate radio buttons
@@ -509,6 +588,7 @@ class AppWindow(QMainWindow):
                 for button in radio.buttons():
                     button.setStyleSheet("background-color: rgb(255, 143, 145);")
 
+        self.process_radio_input()
 
         if complete:
             return 0

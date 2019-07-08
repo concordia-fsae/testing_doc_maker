@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\attendee_export.ui'
+# Form implementation generated from reading ui file '.\windows\attendee_export.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.3
 #
@@ -21,7 +21,7 @@ class Ui_attendee_list(object):
         self.tree_attendee.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tree_attendee.setEditTriggers(QtWidgets.QAbstractItemView.EditKeyPressed)
         self.tree_attendee.setAlternatingRowColors(True)
-        self.tree_attendee.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
+        self.tree_attendee.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.tree_attendee.setUniformRowHeights(False)
         self.tree_attendee.setHeaderHidden(False)
         self.tree_attendee.setObjectName("tree_attendee")
