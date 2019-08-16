@@ -32,15 +32,18 @@ class AppWindow(QMainWindow):
         self.attendee = AttendeeWindow(self)
         self.member = MemberWindow(self)
 
+        # set date to today's date, and adjust minimum difference between start time and end time
         today = QDate.currentDate()
         self.ui.date_session.setDate(today)
         self.ui.date_session.setMinimumDate(today)
         self.ui.time_start.editingFinished.connect(self.min_end_time)
 
+        # adjust initial visibility of labels
         self.ui.label_save_doc.setVisible(False)
         self.ui.label_create_roster.setVisible(False)
         self.ui.label_roster.setVisible(False)
 
+        # map buttons to functions
         self.ui.btn_save_doc.clicked.connect(self.save_testing_doc_dialog)
         self.ui.btn_open_template.clicked.connect(self.open_testing_doc_dialog)
         self.ui.btn_submit_form.clicked.connect(self.submit_form)
@@ -55,44 +58,50 @@ class AppWindow(QMainWindow):
         self.ui.btn_modify_member.clicked.connect(partial(self.member_window, "modify"))
         self.ui.btn_remove_member.clicked.connect(self.remove_member)
 
+        # map actions in roster to functions
         self.ui.tree_roster.itemActivated.connect(partial(self.member_window, "modify"))
         self.ui.tree_roster.itemSelectionChanged.connect(self.member_selected)
         self.ui.tree_roster.sortByColumn(0, 0)
 
+        # map menubar actions to functions
         self.ui.actionOpen_Template_File.triggered.connect(self.open_testing_doc_dialog)
         self.ui.actionSave_Testing_Doc.triggered.connect(self.save_testing_doc_dialog)
 
-        self.roster_file_path = ""
+        # define vars reltaed to loading files
+        self.roster_file_path = None
         self.roster = {}
         self.doc_template_path = self.doc_template = self.pc01 = None
         self.pc02 = self.pc08 = None
 
+        # define list of radio button groups, and link actions to functions
         self.radios = [self.ui.radio_type, self.ui.radio_loc]
         self.ui.radio_type.buttonClicked.connect(partial(self.process_radio_input))
         self.ui.radio_loc.buttonClicked.connect(partial(self.process_radio_input))
 
+        # define lists of field categories
         self.alpha_fields = [self.ui.edit_requestor, self.ui.edit_lead, \
                                 self.ui.edit_type_other, self.ui.edit_cat]
         self.alphanum_fields = [self.ui.edit_part, self.ui.edit_loc_other]
         self.num_fields = [self.ui.edit_doc_num]
         self.fields = self.alpha_fields + self.alphanum_fields + self.num_fields
 
+        # link field focus events to the functions that process the data in them
         for field in self.fields:
             field.focusOutEvent = partial(self.process_input, field)
             field.focusInEvent = partial(self.reset_color, field)
 
+        # assign regex to the alpha fields
         for field in self.alpha_fields:
             field.setValidator(QRegExpValidator(QRegExp("[a-zA-Z\\s]*")))
 
-
+        # assign regex to the alphanumeric fields
         for field in self.alphanum_fields:
             field.setValidator(QRegExpValidator(QRegExp("[a-zA-Z\\s\\d]*")))
 
+        # assign regex to the doc num field
+        self.ui.edit_doc_num.setValidator(QRegExpValidator(QRegExp("[\\d]{5}")))
 
-        for field in self.num_fields:
-            field.setValidator(QRegExpValidator(QRegExp("[\\d]{5}")))
-
-
+        # show the main window
         self.show()
 
 
@@ -103,13 +112,23 @@ class AppWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Select Template File", \
             "", "Excel Files (*.xlsx);;All Files (*)", options=options)
         if file_name:
-            # TODO protect this (try except)
-            self.doc_template_path = file_name
-            self.doc_template = load_workbook(filename=self.doc_template_path)
-            self.pc01 = self.doc_template['General Information']
-            self.pc02 = self.doc_template['PC02 - Safety']
-            self.pc08 = self.doc_template['PC08 - Personnel List']
-            self.ui.file_path.setText(self.doc_template_path)
+            try:
+                self.doc_template_path = file_name
+                self.doc_template = load_workbook(filename=self.doc_template_path)
+                self.pc01 = self.doc_template['General Information']
+                self.pc02 = self.doc_template['PC02 - Safety']
+                self.pc08 = self.doc_template['PC08 - Personnel List']
+                self.ui.file_path.setText(self.doc_template_path)
+
+            except KeyError:
+                QMessageBox.critical(self, "Error in file", \
+                    "The required sheets were not found in this file.\n"\
+                        "Check that this file matches the template.")
+
+            except IOError:
+                QMessageBox.critical(self, "Unable to open file", \
+                    "There was an error opening \"%s\"" % file_name)
+                self.ui.label_roster.setText("Error opening file")
 
 
     def save_testing_doc_dialog(self):
@@ -120,6 +139,7 @@ class AppWindow(QMainWindow):
             "", "Excel File (*.xlsx);;All Files (*)", options=options)
         if file_name:
             pass
+            # TODO save the testing doc
 
 
     def open_roster_dialog(self):
@@ -178,7 +198,7 @@ class AppWindow(QMainWindow):
 
 
     def create_roster_dialog(self):
-        '''Start the "save file" dialog for saving the completed testing doc'''
+        '''Start the "save file" dialog for saving the roster'''
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getSaveFileName(self, "Create Roster File", \
@@ -193,8 +213,8 @@ class AppWindow(QMainWindow):
                     self.ui.label_roster.setVisible(True)
                     self.ui.btn_open_roster.setText("Roster File Opened")
                     self.ui.btn_open_roster.setEnabled(False)
-                    self.ui.btn_close_roster.setEnabled(True)
                     self.ui.btn_create_roster.setEnabled(False)
+                    self.ui.btn_close_roster.setEnabled(True)
                     self.ui.btn_save_roster.setEnabled(True)
                     self.ui.btn_add_member.setEnabled(True)
 
@@ -585,8 +605,8 @@ class AppWindow(QMainWindow):
     def validate_input(self):
         '''Validate the information that the user has entered'''
         complete = True
-        ### validate alpha fields
-        for field in self.alpha_fields:
+        ### validate text entry fields
+        for field in self.alpha_fields + self.alphanum_fields + [self.ui.edit_doc_num]:
             if(field.isEnabled() and (field.text() == "" \
                 or field.text() == " " \
                 or not field.hasAcceptableInput())):
@@ -595,26 +615,6 @@ class AppWindow(QMainWindow):
                 field.setStyleSheet("background-color: rgb(255, 143, 145);")
             else:
                 field.setStyleSheet("")
-
-        ### validate alphanumeric fields
-        for field in self.alphanum_fields:
-            if(field.isEnabled() and (field.text() == "" \
-                or field.text() == " " \
-                or not field.hasAcceptableInput())):
-
-                complete = False
-                field.setStyleSheet("background-color: rgb(255, 143, 145);")
-            else:
-                field.setStyleSheet("")
-
-        ### validate testing doc number
-        doc_num = self.ui.edit_doc_num
-        if doc_num.text() == "" or len(doc_num.text()) < 5:
-            doc_num.setStyleSheet("background-color: rgb(255, 143, 145);")
-            complete = False
-        else:
-            doc_num.setStyleSheet("")
-
 
         ### validate radio buttons
         for radio in self.radios:
@@ -626,13 +626,12 @@ class AppWindow(QMainWindow):
 
         if complete:
             return 0
-        else:
-            return 1
+
+        return 1
 
 
     def submit_form(self):
         '''Submit the Google Form'''
-
         if self.validate_input():
             return
         other_type_resp = other_loc_resp = ""
@@ -670,7 +669,7 @@ class AppWindow(QMainWindow):
         '''Set the minimum end time when the start time changes'''
         min_end = self.ui.time_start.time()
         if self.ui.time_end.time().hour() < self.ui.time_start.time().hour() + 1:
-            min_end.setHMS(min_end.hour()+1, min_end.minute(), min_end.second())
+            min_end.setHMS(min_end.hour() + 1, min_end.minute(), min_end.second())
             self.ui.time_end.setMinimumTime(min_end)
 
 
@@ -692,9 +691,6 @@ class AttendeeWindow(QDialog):
         self.ui.btn_add_member.clicked.connect(self.add_member)
         self.ui.btn_remove_member.clicked.connect(self.remove_member)
         self.ui.tree_attendee.clicked.connect(self.member_selected)
-
-        self.ui.tree_attendee.addTopLevelItem(QTreeWidgetItem(["asdf", "asdf", "1245", "asdf"]))
-        self.ui.tree_attendee.addTopLevelItem(QTreeWidgetItem(["asdf", "asdf", "1245", "asdf"]))
 
 
     def add_member(self):

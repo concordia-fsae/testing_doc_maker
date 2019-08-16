@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'member_export.ui'
+# Form implementation generated from reading ui file '.\windows\member_export.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.3
 #
@@ -60,6 +60,7 @@ class Ui_member_mod(object):
         self.edit_first_name.setSizePolicy(sizePolicy)
         self.edit_first_name.setMinimumSize(QtCore.QSize(0, 0))
         self.edit_first_name.setMaximumSize(QtCore.QSize(110, 16777215))
+        self.edit_first_name.setStyleSheet("*[hasAcceptableInput=\"false\"] { background-color: red }")
         self.edit_first_name.setObjectName("edit_first_name")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.edit_first_name)
         self.edit_last_name = QtWidgets.QLineEdit(member_mod)
